@@ -7,6 +7,8 @@ import { useRouter } from 'next/router'
 import styles from '@/styles/page.module.css'
 
 import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 import InputLabel from '@/components/Form/InputLabel'
 import SelectAddress from '@/components/Form/SelectAddress';
@@ -36,11 +38,20 @@ interface UserTakecareData {
 
 const Puserinfo = () => {
     const router = useRouter();
-    const [alert, setAlert] = useState({ show: false, message: '' });
+    const [alert, setAlert] = useState({
+        show: false,
+        message: '',
+        showClose: true,
+        autoCloseMs: undefined as number | undefined,
+        messageClassName: undefined as string | undefined
+    });
     const [user, setUser] = useState<UserData>({ isLogin: false, data: null })
     const [dataUser, setDataUser] = useState<UserTakecareData>({ isLogin: true, data: null, users_id: null });
     const [masterGender, setMasterGender] = useState<[]>([]);
     const [masterMarry, setMasterMarry] = useState<[]>([]);
+    const [confirmShow, setConfirmShow] = useState(false);
+    const [pendingData, setPendingData] = useState<PuserinfoFormData | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // 🔥 เรียกใช้ Thai Address Hook
     const { data, status, selected, actions, getNames, getLabel } = useThaiAddress();
@@ -53,7 +64,7 @@ const Puserinfo = () => {
         watch,
         setValue,
         control,
-        formState: { errors, isSubmitting, isValid, dirtyFields } // 🔥 เพิ่ม dirtyFields
+        formState: { errors, dirtyFields } // 🔥 เพิ่ม dirtyFields
     } = useForm<PuserinfoFormData>({
         resolver: zodResolver(puserinfoSchema),
         mode: "onChange",
@@ -105,6 +116,7 @@ const Puserinfo = () => {
                                 takecare_province: takecareData.takecare_province,
                                 takecare_postcode: takecareData.takecare_postcode,
                                 takecare_tel1: takecareData.takecare_tel1,
+                                takecare_tel_home: takecareData.takecare_tel_home,
                                 takecare_disease: takecareData.takecare_disease,
                                 takecare_drug: takecareData.takecare_drug,
                             });
@@ -120,7 +132,7 @@ const Puserinfo = () => {
                     console.log("🚀 ~ file: Puserinfo.tsx ~ fetchUserData ~ error:", error)
                     setUser({ isLogin: false, data: null })
                     setDataUser({ isLogin: false, data: null, users_id: null })
-                    setAlert({ show: true, message: 'ระบบไม่สามารถดึงข้อมูลของท่านได้ กรุณาลองใหม่อีกครั้ง' })
+                    setAlert({ show: true, message: 'ระบบไม่สามารถดึงข้อมูลของท่านได้ กรุณาลองใหม่อีกครั้ง', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
                 }
             };
             fetchUserData();
@@ -155,14 +167,14 @@ const Puserinfo = () => {
                 setMasterMarry(response2.data.data)
             }
         } catch (error) {
-            setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูล Master ได้' })
+            setAlert({ show: true, message: 'ไม่สามารถดึงข้อมูล Master ได้', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
         }
     }
 
     const onSubmit = async (formData: PuserinfoFormData) => {
         try {
             if(!dataUser.data){
-                setAlert({ show: true, message: 'ไม่พบข้อมูลผู้มีภาวะพึ่งพิง' })
+                setAlert({ show: true, message: 'ไม่พบข้อมูลผู้มีภาวะพึ่งพิง', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
                 return;
             }
 
@@ -180,6 +192,7 @@ const Puserinfo = () => {
                 takecare_province: formData.takecare_province,
                 takecare_postcode: formData.takecare_postcode,
                 takecare_tel1    : formData.takecare_tel1,
+                takecare_tel_home: formData.takecare_tel_home,
                 takecare_disease : formData.takecare_disease,
                 takecare_drug    : formData.takecare_drug,
             }
@@ -200,15 +213,43 @@ const Puserinfo = () => {
                 }
             }
             
-            setAlert({ show: true, message: 'บันทึกข้อมูลสำเร็จ' })
+            setAlert({
+                show: true,
+                message: 'บันทึกข้อมูลแล้ว',
+                showClose: false,
+                autoCloseMs: 1500,
+                messageClassName: 'fs-3 fw-bold text-center'
+            })
 
         } catch (error) {
             console.error('Error in handleSubmit:', error);
-            setAlert({ show: true, message: 'ไม่สามารถบันทึกข้อมูลได้' })
+            setAlert({ show: true, message: 'ไม่สามารถบันทึกข้อมูลได้', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
         }
     };
 
-    if (dataUser.isLogin) return <div>loading...</div>;
+    const onConfirmSubmit = async () => {
+        if (!pendingData) return;
+        setIsSaving(true);
+        try {
+            await onSubmit(pendingData);
+        } finally {
+            setIsSaving(false);
+            setConfirmShow(false);
+            setPendingData(null);
+        }
+    };
+
+    const onCancelSubmit = () => {
+        setConfirmShow(false);
+        setPendingData(null);
+    };
+
+    const onPrepareSubmit = (formData: PuserinfoFormData) => {
+        setPendingData(formData);
+        setConfirmShow(true);
+    };
+
+//if (dataUser.isLogin) return <div>loading...</div>;
 
     return (
         <Container>
@@ -216,7 +257,7 @@ const Puserinfo = () => {
                 <h1 className="py-2">ข้อมูลผู้มีภาวะพึ่งพิง</h1>
             </div>
             <div className="px-5">
-                <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <Form noValidate onSubmit={handleSubmit(onPrepareSubmit)}>
                     
                     <InputLabel 
                         label="ชื่อ" 
@@ -332,7 +373,7 @@ const Puserinfo = () => {
                     <InputLabel 
                         label="หมู่" 
                         id="takecare_moo" 
-                        placeholder="1" 
+                        placeholder="1"  
                         max={5}
                         {...register("takecare_moo")}
                         isValid={isFieldValid("takecare_moo")}
@@ -356,7 +397,7 @@ const Puserinfo = () => {
                             <input type="hidden" {...register("takecare_tubon")} />
                             
                             <SelectAddress
-                                label="จังหวัด"
+                                label="ตำบล"
                                 id="takecare_province"
                                 value={selected.provinceId}
                                 options={data.provinces}
@@ -381,7 +422,7 @@ const Puserinfo = () => {
                             />
 
                             <SelectAddress
-                                label="อำเภอ"
+                                label="ตำบล"
                                 id="takecare_amphur"
                                 value={selected.districtId}
                                 options={data.districts}
@@ -395,7 +436,7 @@ const Puserinfo = () => {
                                     setValue("takecare_postcode", "", { shouldValidate: true, shouldDirty: true });
                                 }}
                                 disabled={!selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
+                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
                                 isInvalid={!!errors.takecare_amphur}
                                 errorMessage={errors.takecare_amphur?.message}
                                 isValid={isFieldValid("takecare_amphur")}
@@ -452,8 +493,20 @@ const Puserinfo = () => {
                         {...register("takecare_tel1")}
                         isInvalid={!!errors.takecare_tel1}
                         errorMessage={errors.takecare_tel1?.message}
-                        isValid={isFieldValid("takecare_tel1")}
-                        required
+                        isValid={isFieldValid("takecare_tel1")}                        
+                    />
+
+
+                    <InputLabel 
+                        label="เบอร์โทรศัพท์บ้าน" 
+                        id="takecare_tel_home" 
+                        placeholder="กรอกเบอร์โทรศัพท์บ้าน" 
+                        type="tel"
+                        max={10}
+                        {...register("takecare_tel_home")}
+                        isInvalid={!!errors.takecare_tel_home}
+                        errorMessage={errors.takecare_tel_home?.message}
+                        isValid={isFieldValid("takecare_tel_home")}
                     />
 
                     <InputLabel 
@@ -478,12 +531,38 @@ const Puserinfo = () => {
                             className={styles.button} 
                             text={'บันทึก'} 
                             icon="fas fa-save" 
-                            isLoading={isSubmitting} 
+                            isLoading={isSaving} 
                         />
                     </Form.Group>
                 </Form>
             </div>
-            <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            <ModalAlert
+                show={alert.show}
+                message={alert.message}
+                showClose={alert.showClose}
+                autoCloseMs={alert.autoCloseMs}
+                messageClassName={alert.messageClassName}
+                handleClose={() => setAlert({ show: false, message: '', showClose: true, autoCloseMs: undefined, messageClassName: undefined })}
+            />
+            <Modal show={confirmShow} centered onHide={onCancelSubmit}>
+                <Modal.Header className="py-2">
+                    <h5 className="m-0">SEPAW</h5>
+                    <button type="button" className="btn outline" style={{ fontSize: 20 }} onClick={onCancelSubmit}>
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>ยืนยันการบันทึกข้อมูลหรือไม่</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" size="lg" className="px-4" onClick={onCancelSubmit}>
+                        ยกเลิก
+                    </Button>
+                    <Button variant="primary" size="lg" className="px-4" onClick={onConfirmSubmit} disabled={isSaving}>
+                        {isSaving ? 'กำลังบันทึก...' : 'ตกลง'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     )
 }

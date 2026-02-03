@@ -45,6 +45,7 @@ interface UserTakecareData {
         takecare_province?: string;
         takecare_postcode?: string;
         takecare_tel1    ?: string;
+        takecare_tel_home?: string;
         takecare_disease ?: string;
         takecare_drug    ?: string;
         takecare_status  ?: number;
@@ -140,6 +141,7 @@ const ElderlyRegistration = () => {
                                 takecare_province: takecareData.takecare_province,
                                 takecare_postcode: takecareData.takecare_postcode,
                                 takecare_tel1: takecareData.takecare_tel1,
+                                takecare_tel_home: takecareData.takecare_tel_home,
                                 takecare_disease: takecareData.takecare_disease,
                                 takecare_drug: takecareData.takecare_drug,
                             });
@@ -230,6 +232,7 @@ const ElderlyRegistration = () => {
                 takecare_province: formData.takecare_province,
                 takecare_postcode: formData.takecare_postcode,
                 takecare_tel1    : formData.takecare_tel1,
+                takecare_tel_home: formData.takecare_tel_home,
                 takecare_disease : formData.takecare_disease,
                 takecare_drug    : formData.takecare_drug,
             }
@@ -376,7 +379,7 @@ const ElderlyRegistration = () => {
                     <InputLabel 
                         label="เลขที่บ้าน" 
                         id="takecare_number" 
-                        placeholder="123/12" 
+                        placeholder="กรอกเลขที่บ้าน" 
                         max={10}
                         disabled={!!dataUser.data}
                         {...register("takecare_number")}
@@ -433,7 +436,7 @@ const ElderlyRegistration = () => {
                                 options={data.districts}
                                 onChange={actions.setDistrict}
                                 disabled={!!dataUser.data || !selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
+                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
                                 isInvalid={!!errors.takecare_amphur}
                                 errorMessage={errors.takecare_amphur?.message}
                                 isValid={isFieldValid("takecare_amphur")}
@@ -486,7 +489,18 @@ const ElderlyRegistration = () => {
                         isValid={isFieldValid("takecare_tel1")}
                         required
                     />
-
+                    <InputLabel 
+                        label="เบอร์โทรศัพท์บ้าน" 
+                        id="takecare_tel_home" 
+                        placeholder="กรอกเบอร์โทรศัพท์บ้าน" 
+                        type="tel"
+                        max={10}
+                        disabled={!!dataUser.data}
+                        {...register("takecare_tel_home")}
+                        isInvalid={!!errors.takecare_tel_home}
+                        errorMessage={errors.takecare_tel_home?.message}
+                        isValid={isFieldValid("takecare_tel_home")}
+                    />
                     <InputLabel 
                         label="โรคประจำตัว" 
                         id="takecare_disease" 

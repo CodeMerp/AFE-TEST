@@ -74,10 +74,23 @@ const InputLabel = forwardRef<HTMLInputElement, Props>((props, ref) => {
                     {...inputCustom}
                     {...rest}
 
-                    onChange={(e: any) => {
-                        if (rest.onChange) rest.onChange(e);
-                        if (onChange && typeof onChange === 'function' && !rest.onChange) {
-                             (onChange as (val: string) => void)(e.target.value);
+                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        // ถ้ามี onChange จาก rest ให้ใช้ตัวนั้นก่อน
+                        if (typeof rest.onChange === 'function') {
+                            rest.onChange(e)
+                            return
+                        }
+
+                        if (typeof onChange === 'function') {
+                            // ถ้า onChange ถูกออกแบบมารับ event
+                            if ((onChange as any).length === 1) {
+                                try {
+                                    (onChange as React.ChangeEventHandler<HTMLInputElement>)(e)
+                                } catch {
+                                    // fallback: รับ value
+                                    (onChange as (val: string | number) => void)(e.target.value)
+                                }
+                            }
                         }
                     }}
                 />

@@ -49,6 +49,7 @@ const Registration = () => {
         defaultValues: {
             users_pin: "",
             users_tel1: "",
+            users_tel_home: "",
             users_postcode: ""
         }
     });
@@ -99,6 +100,7 @@ const Registration = () => {
                             users_province: userData.users_province,
                             users_postcode: userData.users_postcode,
                             users_tel1: userData.users_tel1,
+                            users_tel_home: userData.users_tel_home,
                         });
 
                         // Set initial address values for dropdown
@@ -155,6 +157,7 @@ const Registration = () => {
                     users_province: userData.users_province,
                     users_postcode: userData.users_postcode,
                     users_tel1: userData.users_tel1,
+                            users_tel_home: userData.users_tel_home,
                 });
 
                 // Set initial address values for dropdown
@@ -198,6 +201,7 @@ const Registration = () => {
                 users_province: formData.users_province,
                 users_postcode: formData.users_postcode,
                 users_tel1: formData.users_tel1,
+                users_tel_home: formData.users_tel_home,
             }
 
             await axios.post(`${process.env.WEB_DOMAIN}/api/registration/create`, data)
@@ -257,10 +261,10 @@ const Registration = () => {
                                     isValid={isFieldValid("users_passwd")}
                                 />
                                 <InputLabel 
-                                    label="รหัสผ่าน (อีกครั้ง)" 
+                                    label="ยืนยันรหัสผ่าน" 
                                     id="users_passwd_comfirm" 
                                     type="password" 
-                                    placeholder="ยืนยันรหัสผ่าน" 
+                                    placeholder="กรอกยืนยันรหัสผ่าน" 
                                     {...register("users_passwd_comfirm")}
                                     isInvalid={!!errors.users_passwd_comfirm}
                                     errorMessage={errors.users_passwd_comfirm?.message}
@@ -271,8 +275,8 @@ const Registration = () => {
                     }
 
                     <InputLabel 
-                        label="Pin 4 หลัก" 
-                        id="users_pin" 
+                        label="Pin 4 หลัก"
+                        id="users_pin"
                         placeholder="1234" 
                         type="tel" 
                         max={4}
@@ -284,9 +288,9 @@ const Registration = () => {
                     />
 
                     <InputLabel 
-                        label="เลขที่บ้าน" 
-                        id="users_number" 
-                        placeholder="123/12" 
+                        label="เลขที่บ้าน"
+                        id="users_number"
+                        placeholder="123/12"
                         disabled={!!dataUser.data} 
                         {...register("users_number")} 
                         isValid={isFieldValid("users_number")}
@@ -302,7 +306,7 @@ const Registration = () => {
                     <InputLabel 
                         label="ถนน" 
                         id="users_road" 
-                        placeholder="-" 
+                        placeholder="กรอกชื่อถนน" 
                         disabled={!!dataUser.data} 
                         {...register("users_road")}
                         isValid={isFieldValid("users_road")}
@@ -335,7 +339,7 @@ const Registration = () => {
                                 options={data.districts}
                                 onChange={actions.setDistrict}
                                 disabled={!!dataUser.data || !selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
+                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
                                 isInvalid={!!errors.users_amphur}
                                 errorMessage={errors.users_amphur?.message}
                                 isValid={isFieldValid("users_amphur")}
@@ -361,9 +365,9 @@ const Registration = () => {
                     )}
                     
                     <InputLabel 
-                        label="รหัสไปรษณีย์" 
-                        id="users_postcode" 
-                        placeholder="กรอกรหัสไปรษณีย์" 
+                        label="รหัสไปรษณีย์"
+                        id="users_postcode"
+                        placeholder="รหัสไปรษณีย์จะถูกกรอกอัตโนมัติ"
                         type="tel" 
                         max={5}
                         disabled={!!dataUser.data}
@@ -385,6 +389,20 @@ const Registration = () => {
                         isInvalid={!!errors.users_tel1}
                         errorMessage={errors.users_tel1?.message}
                         isValid={isFieldValid("users_tel1")}
+                    />
+
+
+                    <InputLabel 
+                        label="เบอร์โทรศัพท์บ้าน" 
+                        id="users_tel_home" 
+                        placeholder="กรอกเบอร์โทรศัพท์บ้าน" 
+                        type="tel" 
+                        max={10}
+                        disabled={!!dataUser.data} 
+                        {...register("users_tel_home")}
+                        isInvalid={!!errors.users_tel_home}
+                        errorMessage={errors.users_tel_home?.message}
+                        isValid={isFieldValid("users_tel_home")}
                     />
 
                     {

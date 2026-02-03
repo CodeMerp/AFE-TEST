@@ -7,6 +7,23 @@ export const phoneRule = z
   .length(10, "เบอร์โทรศัพท์ต้องมี 10 หลัก")
   .regex(/^[0-9]+$/, "ต้องเป็นตัวเลขเท่านั้น");
 
+
+export const homePhoneRule = z
+  .string()
+  .optional()
+  .refine((val) => {
+    if (!val) return true;
+    const trimmed = val.trim();
+    if (trimmed === "") return true;
+    return /^[0-9]+$/.test(trimmed);
+  }, "เบอร์โทรศัพท์บ้านต้องเป็นตัวเลขเท่านั้น")
+  .refine((val) => {
+    if (!val) return true;
+    const trimmed = val.trim();
+    if (trimmed === "") return true;
+    return trimmed.length >= 9 && trimmed.length <= 10;
+  }, "เบอร์โทรศัพท์บ้านต้องมี 9-10 หลัก");
+
 export const zipCodeRule = z
   .string()
   .min(1, "กรุณากรอกรหัสไปรษณีย์")
@@ -32,6 +49,7 @@ export const userEditSchema = z.object({
 
   users_postcode: zipCodeRule, 
   users_tel1: phoneRule,
+  users_tel_home: homePhoneRule,
 });
 
 // 3. Export Type

@@ -7,6 +7,8 @@ import { useRouter } from 'next/router'
 import styles from '@/styles/page.module.css'
 
 import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 import InputLabel from '@/components/Form/InputLabel'
 import SelectAddress from '@/components/Form/SelectAddress';
@@ -29,8 +31,17 @@ interface UserData {
 
 const Cuserinfo = () => {
     const router = useRouter();
-    const [alert, setAlert] = useState({ show: false, message: '' });
+    const [alert, setAlert] = useState({
+        show: false,
+        message: '',
+        showClose: true,
+        autoCloseMs: undefined as number | undefined,
+        messageClassName: undefined as string | undefined
+    });
     const [dataUser, setDataUser] = useState<UserData>({ isLogin: false, data: null })
+    const [confirmShow, setConfirmShow] = useState(false);
+    const [pendingData, setPendingData] = useState<UserEditFormData | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // 🔥 เรียกใช้ Thai Address Hook
     const { data, status, selected, actions, getNames, getLabel } = useThaiAddress();
@@ -42,13 +53,14 @@ const Cuserinfo = () => {
         reset, 
         watch,
         setValue,
-        formState: { errors, isSubmitting, isValid, dirtyFields } // 🔥 เพิ่ม dirtyFields
+        formState: { errors, dirtyFields } // 🔥 เพิ่ม dirtyFields
     } = useForm<UserEditFormData>({
         resolver: zodResolver(userEditSchema),
         mode: "onChange",
         defaultValues: {
             users_pin: "",
             users_tel1: "",
+            users_tel_home: "",
             users_postcode: ""
         }
     });
@@ -88,6 +100,7 @@ const Cuserinfo = () => {
                             users_province: userData.users_province,
                             users_postcode: userData.users_postcode,
                             users_tel1: userData.users_tel1,
+                            users_tel_home: userData.users_tel_home,
                         });
                     } else {
                         setDataUser({ isLogin: false, data: null })
@@ -95,7 +108,7 @@ const Cuserinfo = () => {
                 } catch (error) {
                     console.log("🚀 ~ file: Cuserinfo.tsx ~ onGetUserData ~ error:", error)
                     setDataUser({ isLogin: false, data: null })
-                    setAlert({ show: true, message: 'ระบบไม่สามารถดึงข้อมูลของท่านได้ กรุณาลองใหม่อีกครั้ง' })
+                    setAlert({ show: true, message: 'ระบบไม่สามารถดึงข้อมูลของท่านได้ กรุณาลองใหม่อีกครั้ง', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
                 }
             };
             fetchUserData();
@@ -135,6 +148,7 @@ const Cuserinfo = () => {
                 users_province: formData.users_province,
                 users_postcode: formData.users_postcode,
                 users_tel1    : formData.users_tel1,
+                users_tel_home: formData.users_tel_home,
             }
 
             const encodedUsersId = encrypt(dataUser.data.users_id.toString());
@@ -147,12 +161,40 @@ const Cuserinfo = () => {
                 }
             }
             
-            setAlert({ show: true, message: 'บันทึกข้อมูลสำเร็จ' })
+            setAlert({
+                show: true,
+                message: 'บันทึกข้อมูลแล้ว',
+                showClose: false,
+                autoCloseMs: 1500,
+                messageClassName: 'fs-3 fw-bold text-center'
+            })
 
         } catch (error) {
             console.error('Error in handleSubmit:', error);
-            setAlert({ show: true, message: 'ไม่สามารถบันทึกข้อมูลได้' })
+            setAlert({ show: true, message: 'ไม่สามารถบันทึกข้อมูลได้', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
         }
+    };
+
+    const onConfirmSubmit = async () => {
+        if (!pendingData) return;
+        setIsSaving(true);
+        try {
+            await onSubmit(pendingData);
+        } finally {
+            setIsSaving(false);
+            setConfirmShow(false);
+            setPendingData(null);
+        }
+    };
+
+    const onCancelSubmit = () => {
+        setConfirmShow(false);
+        setPendingData(null);
+    };
+
+    const onPrepareSubmit = (formData: UserEditFormData) => {
+        setPendingData(formData);
+        setConfirmShow(true);
     };
 
     if (dataUser.isLogin) return <div>loading...</div>;
@@ -162,10 +204,10 @@ const Cuserinfo = () => {
                 <h1 className="py-2">ข้อมูลผู้ดูแล</h1>
             </div>
             <div className="px-5">
-                <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <Form noValidate onSubmit={handleSubmit(onPrepareSubmit)}>
                     
                     <InputLabel 
-                        label="ชื่อ" 
+                        label="ชื่ิอ" 
                         id="users_fname" 
                         placeholder="กรอกชื่อ" 
                         {...register("users_fname")}
@@ -189,7 +231,7 @@ const Cuserinfo = () => {
                     <InputLabel 
                         label="Pin 4 หลัก" 
                         id="users_pin" 
-                        placeholder="1234" 
+                        placeholder="กรอก Pin 4 หลัก" 
                         type="tel" 
                         max={4}
                         {...register("users_pin")}
@@ -235,7 +277,7 @@ const Cuserinfo = () => {
                             <input type="hidden" {...register("users_tubon")} />
                             
                             <SelectAddress
-                                label="จังหวัด"
+                                label="ตำบล"
                                 id="users_province"
                                 value={selected.provinceId}
                                 options={data.provinces}
@@ -260,7 +302,7 @@ const Cuserinfo = () => {
                             />
 
                             <SelectAddress
-                                label="อำเภอ"
+                                label="ตำบล"
                                 id="users_amphur"
                                 value={selected.districtId}
                                 options={data.districts}
@@ -274,7 +316,7 @@ const Cuserinfo = () => {
                                     setValue("users_postcode", "", { shouldValidate: true, shouldDirty: true });
                                 }}
                                 disabled={!selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
+                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
                                 isInvalid={!!errors.users_amphur}
                                 errorMessage={errors.users_amphur?.message}
                                 isValid={isFieldValid("users_amphur")}
@@ -335,19 +377,58 @@ const Cuserinfo = () => {
                         required
                     />
 
+
+                    <InputLabel 
+                        label="เบอร์โทรศัพท์บ้าน" 
+                        id="users_tel_home" 
+                        placeholder="กรอกเบอร์โทรศัพท์บ้าน" 
+                        type="tel" 
+                        max={10}
+                        {...register("users_tel_home")}
+                        isInvalid={!!errors.users_tel_home}
+                        errorMessage={errors.users_tel_home?.message}
+                        isValid={isFieldValid("users_tel_home")}
+                    />
+
                     <Form.Group className="d-flex justify-content-center py-3">
                         <ButtonState 
                             type="submit" 
                             className={styles.button} 
                             text={'บันทึก'} 
                             icon="fas fa-save" 
-                            isLoading={isSubmitting}
+                            isLoading={isSaving}
                         />
                     </Form.Group>
 
                 </Form>
             </div>
-            <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            <ModalAlert
+                show={alert.show}
+                message={alert.message}
+                showClose={alert.showClose}
+                autoCloseMs={alert.autoCloseMs}
+                messageClassName={alert.messageClassName}
+                handleClose={() => setAlert({ show: false, message: '', showClose: true, autoCloseMs: undefined, messageClassName: undefined })}
+            />
+            <Modal show={confirmShow} centered onHide={onCancelSubmit}>
+                <Modal.Header className="py-2">
+                    <h5 className="m-0">SEPAW</h5>
+                    <button type="button" className="btn outline" style={{ fontSize: 20 }} onClick={onCancelSubmit}>
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>ยืนยันการบันทึกข้อมูลหรือไม่</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" size="lg" className="px-4" onClick={onCancelSubmit}>
+                        ยกเลิก
+                    </Button>
+                    <Button variant="primary" size="lg" className="px-4" onClick={onConfirmSubmit} disabled={isSaving}>
+                        {isSaving ? 'กำลังบันทึก...' : 'ตกลง'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     )
 }
