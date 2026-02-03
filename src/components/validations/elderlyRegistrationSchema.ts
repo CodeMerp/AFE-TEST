@@ -17,7 +17,6 @@ export const phoneRule = z
     return trimmed.length === 10;
   }, "เบอร์โทรศัพท์ต้องมี 10 หลัก");
 
-
 export const homePhoneRule = z
   .string()
   .optional()
@@ -31,22 +30,30 @@ export const homePhoneRule = z
     if (!val) return true;
     const trimmed = val.trim();
     if (trimmed === "") return true;
-    return trimmed.length == 10;
+    return trimmed.length === 10;
   }, "เบอร์โทรศัพท์บ้านต้องมี 10 หลัก");
 
 export const zipCodeRule = z
-  .string()
+  .string({
+    required_error: "กรุณากรอกรหัสไปรษณีย์",
+  })
   .min(1, "กรุณากรอกรหัสไปรษณีย์")
   .length(5, "รหัสไปรษณีย์ต้องมี 5 หลัก")
   .regex(/^[0-9]+$/, "ต้องเป็นตัวเลขเท่านั้น");
 
 // --- 2. Schema สำหรับลงทะเบียนผู้มีภาวะพึ่งพิง ---
 export const elderlyRegistrationSchema = z.object({
-  takecare_fname: z.string().min(1, "กรุณากรอกชื่อ"),
-  takecare_sname: z.string().min(1, "กรุณากรอกนามสกุล"),
+  takecare_fname: z.string({
+    required_error: "กรุณากรอกชื่อ",
+  }).min(1, "กรุณากรอกชื่อ"),
+  
+  takecare_sname: z.string({
+    required_error: "กรุณากรอกนามสกุล",
+  }).min(1, "กรุณากรอกนามสกุล"),
   
   takecare_birthday: z.date({
     required_error: "กรุณาเลือกวันเกิด",
+    invalid_type_error: "กรุณาเลือกวันเกิด",
   }),
 
   gender_id: z.number({
@@ -62,9 +69,18 @@ export const elderlyRegistrationSchema = z.object({
   takecare_number: z.string().optional(),
   takecare_moo: z.string().optional(),
   takecare_road: z.string().optional(),
-  takecare_tubon: z.string().min(1, "กรุณากรอกตำบล"),
-  takecare_amphur: z.string().min(1, "กรุณากรอกอำเภอ"),
-  takecare_province: z.string().min(1, "กรุณากรอกจังหวัด"),
+  
+  takecare_tubon: z.string({
+    required_error: "กรุณากรอกตำบล",
+  }).min(1, "กรุณากรอกตำบล"),
+  
+  takecare_amphur: z.string({
+    required_error: "กรุณากรอกอำเภอ",
+  }).min(1, "กรุณากรอกอำเภอ"),
+  
+  takecare_province: z.string({
+    required_error: "กรุณากรอกจังหวัด",
+  }).min(1, "กรุณากรอกจังหวัด"),
 
   takecare_postcode: zipCodeRule, 
   takecare_tel1: phoneRule,
