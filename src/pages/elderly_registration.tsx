@@ -9,6 +9,8 @@ import withCommonData from '@/lib/withCommonData';
 import styles from '@/styles/page.module.css'
 
 import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 import InputLabel from '@/components/Form/InputLabel'
 import SelectAddress from '@/components/Form/SelectAddress';
@@ -61,6 +63,9 @@ const ElderlyRegistration = () => {
     const [dataUser, setDataUser] = useState<UserTakecareData>({ isLogin: true, data: null, users_id: null });
     const [masterGender, setMasterGender] = useState<[]>([]);
     const [masterMarry, setMasterMarry] = useState<[]>([]);
+    const [confirmShow, setConfirmShow] = useState(false);
+    const [pendingData, setPendingData] = useState<ElderlyRegistrationFormData | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // 🔥 เรียกใช้ Thai Address Hook
     const { data, status, selected, actions, getNames, getLabel } = useThaiAddress();
@@ -260,6 +265,28 @@ const ElderlyRegistration = () => {
         }
     };
 
+    const onConfirmSubmit = async () => {
+        if (!pendingData) return;
+        setIsSaving(true);
+        try {
+            await onSubmit(pendingData);
+        } finally {
+            setIsSaving(false);
+            setConfirmShow(false);
+            setPendingData(null);
+        }
+    };
+
+    const onCancelSubmit = () => {
+        setConfirmShow(false);
+        setPendingData(null);
+    };
+
+    const onPrepareSubmit = (formData: ElderlyRegistrationFormData) => {
+        setPendingData(formData);
+        setConfirmShow(true);
+    };
+
     if (dataUser.isLogin) return null;
 
     return (
@@ -269,7 +296,7 @@ const ElderlyRegistration = () => {
                 <h1 className="py-2">ลงทะเบียนผู้มีภาวะพึ่งพิง</h1>
             </div>
             <div className="px-5">
-                <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <Form noValidate onSubmit={handleSubmit(onPrepareSubmit)}>
                     
                     <InputLabel 
                         label="ชื่อ" 
@@ -484,10 +511,7 @@ const ElderlyRegistration = () => {
                         max={10}
                         disabled={!!dataUser.data}
                         {...register("takecare_tel1")}
-                        isInvalid={!!errors.takecare_tel1}
-                        errorMessage={errors.takecare_tel1?.message}
                         isValid={isFieldValid("takecare_tel1")}
-                        required
                     />
                     <InputLabel 
                         label="เบอร์โทรศัพท์บ้าน" 
@@ -527,7 +551,7 @@ const ElderlyRegistration = () => {
                                     className={styles.button} 
                                     text={'บันทึก'} 
                                     icon="fas fa-save" 
-                                    isLoading={isSubmitting} 
+                                    isLoading={isSaving} 
                                 />
                             </Form.Group>
                         )
@@ -536,6 +560,27 @@ const ElderlyRegistration = () => {
                 </Form>
             </div>
             <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            
+            {/* 🔥 Modal ยืนยันการบันทึก */}
+            <Modal show={confirmShow} centered onHide={onCancelSubmit}>
+                <Modal.Header className="py-2">
+                    <h5 className="m-0">SEPAW</h5>
+                    <button type="button" className="btn outline" style={{ fontSize: 20 }} onClick={onCancelSubmit}>
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>ยืนยันการบันทึกข้อมูลหรือไม่</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" size="lg" className="px-4" onClick={onCancelSubmit}>
+                        ยกเลิก
+                    </Button>
+                    <Button variant="primary" size="lg" className="px-4" onClick={onConfirmSubmit} disabled={isSaving}>
+                        {isSaving ? 'กำลังบันทึก...' : 'ตกลง'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     )
 }
