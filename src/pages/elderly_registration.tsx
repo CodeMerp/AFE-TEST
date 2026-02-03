@@ -275,21 +275,7 @@ const ElderlyRegistration = () => {
 
             await axios.post(`${process.env.WEB_DOMAIN}/api/registration/takecareperson`, data)
             
-            // Reload data
-            if (router.query.auToken && typeof router.query.auToken === 'string') {
-                const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${router.query.auToken}`);
-                if(responseUser.data?.data){
-                    const encodedUsersId = encrypt(responseUser.data?.data.users_id.toString());
-                    const responseTakecareperson = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${encodedUsersId}`);
-                    setDataUser({ 
-                        isLogin: false, 
-                        data: responseTakecareperson.data?.data, 
-                        users_id: responseUser.data?.data.users_id 
-                    });
-                }
-            }
-            
-            // ✅ ลบ setAlert ออกจาก onSubmit (จะย้ายไปแสดงใน onConfirmSubmit แทน)
+            // ✅ ย้าย data reload ไปเรียกใน onConfirmSubmit แทน (เพื่อไม่ให้ขัดแย้งกับ alert)
 
         } catch (error) {
             setAlert({ 
@@ -309,6 +295,25 @@ const ElderlyRegistration = () => {
         setIsSaving(true);
         try {
             await onSubmit(pendingData);
+            
+            // ✅ รอให้ reload data ทำงานเสร็จก่อน
+            if (router.query.auToken && typeof router.query.auToken === 'string') {
+                try {
+                    const responseUser = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUser/${router.query.auToken}`);
+                    if(responseUser.data?.data){
+                        const encodedUsersId = encrypt(responseUser.data?.data.users_id.toString());
+                        const responseTakecareperson = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${encodedUsersId}`);
+                        setDataUser({ 
+                            isLogin: false, 
+                            data: responseTakecareperson.data?.data, 
+                            users_id: responseUser.data?.data.users_id 
+                        });
+                    }
+                } catch (error) {
+                    // ไม่ต้องทำอะไร - ข้อมูลอาจจะยังไม่พร้อม
+                }
+            }
+            
             // ✅ ปิด popup ยืนยันก่อน
             setConfirmShow(false);
             setPendingData(null);
@@ -322,6 +327,17 @@ const ElderlyRegistration = () => {
                     autoCloseMs: 1500,
                     messageClassName: 'fs-3 fw-bold text-center'
                 })
+                
+                // ✅ ปิด alert อัตโนมัติหลัง 1.5 วินาที
+                setTimeout(() => {
+                    setAlert({
+                        show: false,
+                        message: '',
+                        showClose: true,
+                        autoCloseMs: undefined,
+                        messageClassName: undefined
+                    })
+                }, 1500);
             }, 300);
         } catch (error) {
             console.error('Error in onConfirmSubmit:', error);

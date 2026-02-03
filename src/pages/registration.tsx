@@ -242,11 +242,7 @@ const Registration = () => {
 
             await axios.post(`${process.env.WEB_DOMAIN}/api/registration/create`, data)
             
-            if (typeof router.query.auToken === 'string') {
-                onGetUserData(router.query.auToken);
-            }
-            
-            // ✅ ลบ setAlert ออกจาก onSubmit (จะย้ายไปแสดงใน onConfirmSubmit แทน)
+            // ✅ ย้าย onGetUserData ไปเรียกใน onConfirmSubmit แทน (เพื่อไม่ให้ขัดแย้งกับ alert)
 
         } catch (error) {
             setAlert({ 
@@ -266,6 +262,16 @@ const Registration = () => {
         setIsSaving(true);
         try {
             await onSubmit(pendingData);
+            
+            // ✅ รอให้ onGetUserData ทำงานเสร็จก่อน (ถ้ามี)
+            if (typeof router.query.auToken === 'string') {
+                try {
+                    await onGetUserData(router.query.auToken);
+                } catch (error) {
+                    // ไม่ต้องทำอะไร - ข้อมูลอาจจะยังไม่พร้อม
+                }
+            }
+            
             // ✅ ปิด popup ยืนยันก่อน
             setConfirmShow(false);
             setPendingData(null);
@@ -279,6 +285,17 @@ const Registration = () => {
                     autoCloseMs: 1500,
                     messageClassName: 'fs-3 fw-bold text-center'
                 })
+                
+                // ✅ ปิด alert อัตโนมัติหลัง 1.5 วินาที
+                setTimeout(() => {
+                    setAlert({
+                        show: false,
+                        message: '',
+                        showClose: true,
+                        autoCloseMs: undefined,
+                        messageClassName: undefined
+                    })
+                }, 1500);
             }, 300);
         } catch (error) {
             console.error('Error in onConfirmSubmit:', error);
