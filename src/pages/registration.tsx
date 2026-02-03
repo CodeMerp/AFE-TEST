@@ -416,7 +416,7 @@ const Registration = () => {
                                 options={data.districts}
                                 onChange={actions.setDistrict}
                                 disabled={!!dataUser.data || !selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
+                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
                                 isInvalid={!!errors.users_amphur}
                                 errorMessage={errors.users_amphur?.message}
                                 isValid={isFieldValid("users_amphur")}

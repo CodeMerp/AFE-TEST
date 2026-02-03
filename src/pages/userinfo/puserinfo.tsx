@@ -397,7 +397,7 @@ const Puserinfo = () => {
                             <input type="hidden" {...register("takecare_tubon")} />
                             
                             <SelectAddress
-                                label="ตำบล"
+                                label="จังหวัด"
                                 id="takecare_province"
                                 value={selected.provinceId}
                                 options={data.provinces}
@@ -422,7 +422,7 @@ const Puserinfo = () => {
                             />
 
                             <SelectAddress
-                                label="ตำบล"
+                                label="อำเภอ"
                                 id="takecare_amphur"
                                 value={selected.districtId}
                                 options={data.districts}
@@ -436,7 +436,7 @@ const Puserinfo = () => {
                                     setValue("takecare_postcode", "", { shouldValidate: true, shouldDirty: true });
                                 }}
                                 disabled={!selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
+                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
                                 isInvalid={!!errors.takecare_amphur}
                                 errorMessage={errors.takecare_amphur?.message}
                                 isValid={isFieldValid("takecare_amphur")}
@@ -478,7 +478,6 @@ const Puserinfo = () => {
                         max={5}
                         {...register("takecare_postcode")}
                         isInvalid={!!errors.takecare_postcode}
-                        errorMessage={errors.takecare_postcode?.message}
                         isValid={isFieldValid("takecare_postcode")}
                         readOnly
                         required

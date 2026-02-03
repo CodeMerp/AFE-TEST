@@ -505,7 +505,7 @@ const ElderlyRegistration = () => {
                                 options={data.districts}
                                 onChange={actions.setDistrict}
                                 disabled={!!dataUser.data || !selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
+                                placeholder={!selected.provinceId ? "เลือกจังหวัดก่อน" : "เลือกอำเภอ"}
                                 isInvalid={!!errors.takecare_amphur}
                                 errorMessage={errors.takecare_amphur?.message}
                                 isValid={isFieldValid("takecare_amphur")}
@@ -539,7 +539,6 @@ const ElderlyRegistration = () => {
                         disabled={!!dataUser.data}
                         {...register("takecare_postcode")}
                         isInvalid={!!errors.takecare_postcode}
-                        errorMessage={errors.takecare_postcode?.message}
                         isValid={isFieldValid("takecare_postcode")}
                         readOnly
                         required

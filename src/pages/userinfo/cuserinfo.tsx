@@ -277,7 +277,7 @@ const Cuserinfo = () => {
                             <input type="hidden" {...register("users_tubon")} />
                             
                             <SelectAddress
-                                label="ตำบล"
+                                label="จังหวัด"
                                 id="users_province"
                                 value={selected.provinceId}
                                 options={data.provinces}
@@ -316,7 +316,7 @@ const Cuserinfo = () => {
                                     setValue("users_postcode", "", { shouldValidate: true, shouldDirty: true });
                                 }}
                                 disabled={!selected.provinceId}
-                                placeholder={!selected.provinceId ? "เลือกอำเภอก่อน" : "เลือกตำบล"}
+                                placeholder={!selected.provinceId ? "เลือกตำบลก่อน" : "เลือกอำเภอ"}
                                 isInvalid={!!errors.users_amphur}
                                 errorMessage={errors.users_amphur?.message}
                                 isValid={isFieldValid("users_amphur")}
@@ -358,7 +358,6 @@ const Cuserinfo = () => {
                         max={5}
                         {...register("users_postcode")}
                         isInvalid={!!errors.users_postcode}
-                        errorMessage={errors.users_postcode?.message}
                         isValid={isFieldValid("users_postcode")}
                         readOnly
                         required
