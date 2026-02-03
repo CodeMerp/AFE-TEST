@@ -16,7 +16,7 @@ export const homePhoneRule = z
     const trimmed = val.trim();
     if (trimmed === "") return true;
     return /^[0-9]+$/.test(trimmed);
-  }, "เบอร์โทรศัพท์บ้านต้องเป็นตัวเลขเท่านั้น")
+  }, "ต้องเป็นตัวเลขเท่านั้น")
   .refine((val) => {
     if (!val) return true;
     const trimmed = val.trim();
