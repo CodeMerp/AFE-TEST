@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState, useCallback } from 'react';
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 import ButtonState from '@/components/Button/ButtonState';
 import InputLabel from '@/components/Form/InputLabel';
 import SelectAddress from '@/components/Form/SelectAddress'; // 🔥 Import component ใหม่
@@ -32,6 +34,9 @@ const Registration = () => {
     const [alert, setAlert] = useState({ show: false, message: '' });
     const [displayName, setDisplayName] = useState<string>("");
     const [dataUser, setDataUser] = useState<UserData>({ isLogin: true, data: null });
+    const [confirmShow, setConfirmShow] = useState(false);
+    const [pendingData, setPendingData] = useState<RegistrationFormData | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // 🔥 เรียกใช้ Thai Address Hook
     const { data, status, selected, actions, getNames, getLabel } = useThaiAddress();
@@ -157,7 +162,7 @@ const Registration = () => {
                     users_province: userData.users_province,
                     users_postcode: userData.users_postcode,
                     users_tel1: userData.users_tel1,
-                            users_tel_home: userData.users_tel_home,
+                    users_tel_home: userData.users_tel_home,
                 });
 
                 // Set initial address values for dropdown
@@ -216,6 +221,28 @@ const Registration = () => {
         }
     };
 
+    const onConfirmSubmit = async () => {
+        if (!pendingData) return;
+        setIsSaving(true);
+        try {
+            await onSubmit(pendingData);
+        } finally {
+            setIsSaving(false);
+            setConfirmShow(false);
+            setPendingData(null);
+        }
+    };
+
+    const onCancelSubmit = () => {
+        setConfirmShow(false);
+        setPendingData(null);
+    };
+
+    const onPrepareSubmit = (formData: RegistrationFormData) => {
+        setPendingData(formData);
+        setConfirmShow(true);
+    };
+
     return (
         <Container>
             <div className={styles.main}>
@@ -223,7 +250,7 @@ const Registration = () => {
                 <h1 className="py-2">ลงทะเบียน</h1>
             </div>
             <div className="px-5">
-                <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+                <Form noValidate onSubmit={handleSubmit(onPrepareSubmit)}>
                     
                     <InputLabel 
                         label="ชื่อ" 
@@ -420,7 +447,7 @@ const Registration = () => {
                                     className={styles.button} 
                                     text={'บันทึก'} 
                                     icon="fas fa-save" 
-                                    isLoading={isSubmitting} 
+                                    isLoading={isSaving} 
                                 />
                             </Form.Group>
                         )
@@ -429,6 +456,27 @@ const Registration = () => {
                 </Form>
             </div>
             <ModalAlert show={alert.show} message={alert.message} handleClose={() => setAlert({ show: false, message: '' })} />
+            
+            {/* 🔥 Modal ยืนยันการบันทึก */}
+            <Modal show={confirmShow} centered onHide={onCancelSubmit}>
+                <Modal.Header className="py-2">
+                    <h5 className="m-0">SEPAW</h5>
+                    <button type="button" className="btn outline" style={{ fontSize: 20 }} onClick={onCancelSubmit}>
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>ยืนยันการบันทึกข้อมูลหรือไม่</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" size="lg" className="px-4" onClick={onCancelSubmit}>
+                        ยกเลิก
+                    </Button>
+                    <Button variant="primary" size="lg" className="px-4" onClick={onConfirmSubmit} disabled={isSaving}>
+                        {isSaving ? 'กำลังบันทึก...' : 'ตกลง'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     )
 }
